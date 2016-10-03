@@ -1,0 +1,9 @@
+#####################################################################
+#      mailbox cleanup by blog.it-koehler.com                       #
+#         started on  03-10-2016    20-27-19                        #
+#            content deleted with user deleteuser                   #
+#                                                                   #
+#####################################################################
+deleteuser has Discovery Management permissions
+deleteuser has Organization Management permissions
+Cleaning mailbox Test01@demo01.it-koehler.com was successfull. 40 items were deletet and 1.895 MB (1,987,490 bytes) were removed!
