@@ -17,8 +17,7 @@ As arguments you can use << -NonInteractive -WindowStyle Hidden -command ". 'C:\
 .Notes
 special permission are needed for this action see;
 Configure your user with the right permissions-> New-ManagementRoleAssignment -Name ImportExportRole -User domain\user -Role 'Mailbox Import Export', also check if the user is member of the Discovery Management/Organization Management Group in AD "
-You also need to give the user permission to logon as batch and local adminrights on the computer where you generate the task!
-
+You also need to give the user permission to logon as batch and local adminrights on the computer!
 
 Please define variables 
 username
@@ -81,33 +80,45 @@ Logwrite "#                                                                   #"
 Logwrite "#####################################################################"
 
 
-#check if the user has permissions needed discovery management
+#check if the user has permissions discovery management
 $checkdiscoverymanagement = Get-ADGroupMember "Discovery Management"
-if($checkdiscoverymanagement -eq $null)
+if((($checkdiscoverymanagement).SamAccountName) -contains $username)
 {
-Logwrite "Permission for user $username is missing! Configure your user with the right permissions check if the user is member of the 'Discovery Management' Group in AD "
-exit
+Logwrite "$username has Discovery Management permissions"
 }
 
 else{
-$checkpermissiondiscgrp = ((Get-ADGroupMember -Identity "Discovery Management").SamAccountName).Contains($username)
-Logwrite "Permission for user $username is missing! Configure your user with the right permissions check if the user is member of the 'Discovery Management' Group in AD "
+Logwrite "Permission for user $username is missing! Check if the user is member of the 'Discovery Management' Group in AD "
 exit
 }
 
-
 #check exchange permission
+#check if the user is member of organisation management
+$checkorgman = Get-ADGroupMember "Organization Management"
+if((($checkorgman).SamAccountName) -contains $username)
+{
+Logwrite "$username has Organization Management permissions"
+}
+
+else{
+Logwrite "Permission for user $username is missing! Check if the user is member of the 'Organization Management' Group in AD "
+exit
+}
+
+#check Mailbox Import Export permission
 $name = ((Get-AdUser $username).Name)
 $checkpermissionimpexp = (Get-ManagementRoleAssignment -Role "Mailbox Import Export" -RoleAssignee $name)
-if( ($checkpermissionimpexp -eq $null) -and ($checkpermissiondiscgrp -eq $false) )
+if((($checkpermissionimpexp).RoleAssigneeName) -contains $name )
 {
-   Logwrite "Permission for user $username Import-Export is missing! Configure your user with the right permissions see command: New-ManagementRoleAssignment -Name ImportExportRole -User domain\user -Role 'Mailbox Import Export', also check if the user is member of the Discovery Management Group in AD "
-}
-else {
-#deleting the content of the whole mailbox
+   #deleting the content of the whole mailbox
 $deletestats = (Search-Mailbox -Identity $cleanupmailbox -DeleteContent -force)
 $deletesize = (($deletestats).ResultItemsSize)
 $deleteitems = (($deletestats).ResultItemsCount) 
+}
+else {
+Logwrite "Permission for user $username Import-Export is missing! Configure your user with the right permissions see command: New-ManagementRoleAssignment -Name ImportExportRole -User domain\user -Role 'Mailbox Import Export', also check if the user is member of the Discovery Management Group in AD "
+   exit
+      
 }
 #check if cleanup was successfull
 if( ($deletestats).Success -eq $true )
