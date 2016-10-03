@@ -16,8 +16,9 @@ As arguments you can use << -NonInteractive -WindowStyle Hidden -command ". 'C:\
 
 .Notes
 special permission are needed for this action see;
-Configure your user with the right permissions-> New-ManagementRoleAssignment -Name ImportExportRole -User domain\user -Role 'Mailbox Import Export', also check if the user is member of the Discovery Management Group in AD "
-You also need to give the user permission to logon as batch and local adminrights on the computer!
+Configure your user with the right permissions-> New-ManagementRoleAssignment -Name ImportExportRole -User domain\user -Role 'Mailbox Import Export', also check if the user is member of the Discovery Management/Organization Management Group in AD "
+You also need to give the user permission to logon as batch and local adminrights on the computer where you generate the task!
+
 
 Please define variables 
 username
@@ -80,11 +81,25 @@ Logwrite "#                                                                   #"
 Logwrite "#####################################################################"
 
 
-#check if the user has permissions needed
+#check if the user has permissions needed discovery management
+$checkdiscoverymanagement = Get-ADGroupMember "Discovery Management"
+if($checkdiscoverymanagement -eq $null)
+{
+Logwrite "Permission for user $username is missing! Configure your user with the right permissions check if the user is member of the 'Discovery Management' Group in AD "
+exit
+}
+
+else{
+$checkpermissiondiscgrp = ((Get-ADGroupMember -Identity "Discovery Management").SamAccountName).Contains($username)
+Logwrite "Permission for user $username is missing! Configure your user with the right permissions check if the user is member of the 'Discovery Management' Group in AD "
+exit
+}
+
+
+#check exchange permission
 $name = ((Get-AdUser $username).Name)
 $checkpermissionimpexp = (Get-ManagementRoleAssignment -Role "Mailbox Import Export" -RoleAssignee $name)
-$checkpermissiondiscgrp = ((Get-ADGroupMember -Identity "Discovery Management").SamAccountName).Contains($username)
-if( ($checkpermissionimpexp -eq $null) -and ($checkpermissiondiscgrp -eq $false))
+if( ($checkpermissionimpexp -eq $null) -and ($checkpermissiondiscgrp -eq $false) )
 {
    Logwrite "Permission for user $username Import-Export is missing! Configure your user with the right permissions see command: New-ManagementRoleAssignment -Name ImportExportRole -User domain\user -Role 'Mailbox Import Export', also check if the user is member of the Discovery Management Group in AD "
 }
